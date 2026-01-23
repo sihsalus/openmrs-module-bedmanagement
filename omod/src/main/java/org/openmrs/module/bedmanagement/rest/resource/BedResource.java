@@ -61,6 +61,12 @@ public class BedResource extends DelegatingCrudResource<Bed> {
 			description.addProperty("row");
 			description.addProperty("column");
 			description.addProperty("status", Representation.DEFAULT);
+			
+			////////////
+			// NUEVO: exponer los tags de la cama
+			description.addProperty("bedTagMap", Representation.DEFAULT);
+			////////////
+			
 			return description;
 		}
 		if ((rep instanceof FullRepresentation)) {
@@ -72,10 +78,31 @@ public class BedResource extends DelegatingCrudResource<Bed> {
 			description.addProperty("row");
 			description.addProperty("column");
 			description.addProperty("status", Representation.FULL);
+			
+			////////////
+			// también en la representación FULL
+			description.addProperty("bedTagMap", Representation.FULL);
+			////////////
+			
 			return description;
 		}
 		return null;
 	}
+	
+	/*
+	 * @Override public Model getGETModel(Representation rep) { ModelImpl modelImpl
+	 * = ((ModelImpl) super.getGETModel(rep)); if (rep instanceof
+	 * DefaultRepresentation || rep instanceof RefRepresentation) {
+	 * modelImpl.property("id", new IntegerProperty()).property("uuid", new
+	 * StringProperty()) .property("row", new IntegerProperty()).property("column",
+	 * new IntegerProperty()) .property("bedNumber", new
+	 * StringProperty()).property("status", new StringProperty()); } if (rep
+	 * instanceof FullRepresentation) { modelImpl.property("id", new
+	 * IntegerProperty()).property("uuid", new StringProperty()) .property("row",
+	 * new IntegerProperty()).property("column", new IntegerProperty())
+	 * .property("bedNumber", new StringProperty()).property("status", new
+	 * StringProperty()); } return modelImpl; }
+	 */
 	
 	@Override
 	public Model getGETModel(Representation rep) {
@@ -83,12 +110,15 @@ public class BedResource extends DelegatingCrudResource<Bed> {
 		if (rep instanceof DefaultRepresentation || rep instanceof RefRepresentation) {
 			modelImpl.property("id", new IntegerProperty()).property("uuid", new StringProperty())
 			        .property("row", new IntegerProperty()).property("column", new IntegerProperty())
-			        .property("bedNumber", new StringProperty()).property("status", new StringProperty());
+			        .property("bedNumber", new StringProperty()).property("status", new StringProperty())
+			        // solo para documentación, lo ponemos como String
+			        .property("bedTagMap", new StringProperty());
 		}
 		if (rep instanceof FullRepresentation) {
 			modelImpl.property("id", new IntegerProperty()).property("uuid", new StringProperty())
 			        .property("row", new IntegerProperty()).property("column", new IntegerProperty())
-			        .property("bedNumber", new StringProperty()).property("status", new StringProperty());
+			        .property("bedNumber", new StringProperty()).property("status", new StringProperty())
+			        .property("bedTagMap", new StringProperty());
 		}
 		return modelImpl;
 	}
@@ -134,12 +164,31 @@ public class BedResource extends DelegatingCrudResource<Bed> {
 		return new NeedsPaging<>(bedList, context);
 	}
 	
+	/*
+	 * @Override protected PageableResult doSearch(RequestContext context) {
+	 * BedStatus bedStatus = null; if (context.getParameter("status") != null) {
+	 * bedStatus = context.getParameter("status").equals("AVAILABLE") ?
+	 * BedStatus.AVAILABLE : BedStatus.OCCUPIED; } String bedType =
+	 * context.getParameter("bedType"); String locationUuid =
+	 * context.getParameter("locationUuid"); List<Bed> bedList =
+	 * getBedManagementService().getBeds(locationUuid, bedType, bedStatus, null,
+	 * null); return new NeedsPaging<>(bedList, context); }
+	 */
+	
 	@Override
 	protected PageableResult doSearch(RequestContext context) {
 		BedStatus bedStatus = null;
-		if (context.getParameter("status") != null) {
-			bedStatus = context.getParameter("status").equals("AVAILABLE") ? BedStatus.AVAILABLE : BedStatus.OCCUPIED;
+		String statusParam = context.getParameter("status");
+		
+		if (statusParam != null) {
+			try {
+				bedStatus = BedStatus.valueOf(statusParam.toUpperCase());
+			}
+			catch (IllegalArgumentException ex) {
+				throw new IllegalPropertyException("Unsupported bed status: " + statusParam);
+			}
 		}
+		
 		String bedType = context.getParameter("bedType");
 		String locationUuid = context.getParameter("locationUuid");
 		List<Bed> bedList = getBedManagementService().getBeds(locationUuid, bedType, bedStatus, null, null);
