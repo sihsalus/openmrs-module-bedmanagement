@@ -63,7 +63,7 @@ public class BedResource extends DelegatingCrudResource<Bed> {
 			description.addProperty("status", Representation.DEFAULT);
 			
 			////////////
-			// NUEVO: exponer los tags de la cama
+			// NUEVO: exponer los tags de la cama !!!
 			description.addProperty("bedTagMap", Representation.DEFAULT);
 			////////////
 			
