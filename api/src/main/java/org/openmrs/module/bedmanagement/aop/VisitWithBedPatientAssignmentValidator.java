@@ -32,7 +32,9 @@ public class VisitWithBedPatientAssignmentValidator implements Validator {
 	
 	@Autowired
 	public VisitWithBedPatientAssignmentValidator(
-	    @Qualifier("bedManagementService") BedManagementService bedManagementService) {
+	    @Qualifier("bedManagementServiceImpl") BedManagementService bedManagementService) {
+		// VisitService owns authorization and the transaction; this invariant must not
+		// require bed-administration privileges for ordinary clinical updates.
 		this.bedManagementService = bedManagementService;
 	}
 	

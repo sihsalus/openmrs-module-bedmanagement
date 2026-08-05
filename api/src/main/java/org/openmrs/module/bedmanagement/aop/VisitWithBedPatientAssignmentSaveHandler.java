@@ -36,7 +36,9 @@ public class VisitWithBedPatientAssignmentSaveHandler implements SaveHandler<Vis
 	
 	@Autowired
 	public VisitWithBedPatientAssignmentSaveHandler(
-	    @Qualifier("bedManagementService") BedManagementService bedManagementService) {
+	    @Qualifier("bedManagementServiceImpl") BedManagementService bedManagementService) {
+		// Bed cleanup is a consequence of an authorized visit close, not a separate
+		// user-initiated bed action.
 		this.bedManagementService = bedManagementService;
 	}
 	

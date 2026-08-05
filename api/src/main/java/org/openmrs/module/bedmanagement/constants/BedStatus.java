@@ -5,5 +5,5 @@ public enum BedStatus {
 	OCCUPIED,
 	CLEANING,
 	MAINTENANCE,
-	ISOLATION;
+	ISOLATION
 }

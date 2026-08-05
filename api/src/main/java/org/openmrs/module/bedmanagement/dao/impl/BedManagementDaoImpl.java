@@ -67,9 +67,9 @@ public class BedManagementDaoImpl implements BedManagementDao {
 	public Bed getBedByPatient(Patient patient) {
 		Session session = sessionFactory.getCurrentSession();
 		Bed bed = (Bed) session
-		        .createQuery("select bpa.bed.bedNumber as bedNumber,bpa.bed.id as id from BedPatientAssignment bpa "
-		                + "where bpa.patient = :patient and bpa.endDatetime is null")
-		        .setParameter("patient", patient).setResultTransformer(Transformers.aliasToBean(Bed.class)).uniqueResult();
+		        .createQuery("select bpa.bed from BedPatientAssignment bpa "
+		                + "where bpa.patient = :patient and bpa.endDatetime is null AND bpa.voided is false")
+		        .setParameter("patient", patient).uniqueResult();
 		return bed;
 	}
 	
@@ -141,17 +141,16 @@ public class BedManagementDaoImpl implements BedManagementDao {
 	public List<BedPatientAssignment> getCurrentAssignmentsByBed(Bed bed) {
 		Session session = sessionFactory.getCurrentSession();
 		List<BedPatientAssignment> assignments = session
-		        .createQuery("from BedPatientAssignment where bed=:bed and endDatetime is null").setParameter("bed", bed)
-		        .list();
+		        .createQuery("from BedPatientAssignment where bed=:bed and endDatetime is null and voided is false")
+		        .setParameter("bed", bed).list();
 		return assignments;
 	}
 	
 	@Override
 	public Bed getLatestBedByVisit(String visitUuid) {
 		Session session = sessionFactory.getCurrentSession();
-		Bed bed = (Bed) session
-		        .createQuery("select bpa.bed from BedPatientAssignment bpa " + "inner join bpa.encounter enc "
-		                + "inner join enc.visit v where v.uuid = :visitUuid order by bpa.startDatetime DESC")
+		Bed bed = (Bed) session.createQuery("select bpa.bed from BedPatientAssignment bpa " + "inner join bpa.encounter enc "
+		        + "inner join enc.visit v where v.uuid = :visitUuid and bpa.voided is false order by bpa.startDatetime DESC")
 		        .setParameter("visitUuid", visitUuid).setMaxResults(1).uniqueResult();
 		return bed;
 	}
@@ -336,6 +335,14 @@ public class BedManagementDaoImpl implements BedManagementDao {
 		Session session = this.sessionFactory.getCurrentSession();
 		session.saveOrUpdate(bed);
 		return bed;
+	}
+	
+	@Override
+	public BedTag getBedTagByName(String name) {
+		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(BedTag.class);
+		criteria.add(Restrictions.eq("name", name));
+		criteria.add(Restrictions.eq("voided", false));
+		return (BedTag) criteria.uniqueResult();
 	}
 	
 	@Override
