@@ -36,7 +36,9 @@ public class EncounterWithBedPatientAssignmentSaveHandler implements SaveHandler
 	
 	@Autowired
 	public EncounterWithBedPatientAssignmentSaveHandler(
-	    @Qualifier("bedManagementService") BedManagementService bedManagementService) {
+	    @Qualifier("bedManagementServiceImpl") BedManagementService bedManagementService) {
+		// EncounterService owns authorization; this handler only maintains related
+		// bed-assignment invariants.
 		this.bedManagementService = bedManagementService;
 	}
 	

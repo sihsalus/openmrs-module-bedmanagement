@@ -33,7 +33,9 @@ public class BedPatientAssignmentValidator implements Validator {
 	private final BedManagementService bedManagementService;
 	
 	@Autowired
-	public BedPatientAssignmentValidator(@Qualifier("bedManagementService") BedManagementService bedManagementService) {
+	public BedPatientAssignmentValidator(@Qualifier("bedManagementServiceImpl") BedManagementService bedManagementService) {
+		// The outer bed-management service call is authorized; validation must not
+		// recursively demand privileges.
 		this.bedManagementService = bedManagementService;
 	}
 	

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <privilege privilege="Get Visits" description="Able to get visits" uuid="2c1bd806-cb38-4f7d-948a-552c4d7ceccc"/>
+    <privilege privilege="Edit Visits" description="Able to edit visits" uuid="61bdc116-e312-42e7-96df-949b36a6528a"/>
+    <privilege privilege="Get Encounters" description="Able to get encounters" uuid="08148ccf-ab0a-48a7-a407-e3aceb2d9acf"/>
+    <privilege privilege="Get Visit Attribute Types" description="Able to get visit attribute types" uuid="83a5ac70-aa07-4cca-88af-d0475d8cb9f7"/>
+    <role role="Visit Closer" description="Can close visits without administering beds" uuid="6a74f357-e3d9-4c88-a256-a3c0e87ddf5a"/>
+    <role_privilege role="Visit Closer" privilege="Get Visits"/>
+    <role_privilege role="Visit Closer" privilege="Edit Visits"/>
+    <role_privilege role="Visit Closer" privilege="Get Encounters"/>
+    <role_privilege role="Visit Closer" privilege="Get Visit Attribute Types"/>
+    <user_role user_id="120" role="Visit Closer"/>
+</dataset>
