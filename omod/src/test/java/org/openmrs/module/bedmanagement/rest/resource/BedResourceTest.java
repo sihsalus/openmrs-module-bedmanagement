@@ -2,12 +2,17 @@ package org.openmrs.module.bedmanagement.rest.resource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.openmrs.api.context.Context;
+import org.openmrs.module.bedmanagement.constants.BedStatus;
+import org.openmrs.module.bedmanagement.entity.Bed;
+import org.openmrs.module.bedmanagement.service.BedManagementService;
 import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.response.IllegalPropertyException;
 import org.openmrs.module.webservices.rest.web.response.ObjectNotFoundException;
@@ -62,6 +67,43 @@ public class BedResourceTest extends MainResourceControllerTest {
 		Assert.assertEquals(Integer.valueOf(1), bed.get("column"));
 	}
 	
+	@Test
+	public void shouldExposeBedTagsInDefaultRepresentation() throws Exception {
+		MockHttpServletRequest request = request(RequestMethod.GET, getURI() + "/" + AVAILABLE_BED_UUID);
+		SimpleObject bed = deserialize(handle(request));
+		List tagMaps = (List) bed.get("bedTagMap");
+
+		Assert.assertNotNull(tagMaps);
+		Assert.assertEquals(1, tagMaps.size());
+		Map tagMap = (Map) tagMaps.get(0);
+		Assert.assertEquals("73e846d6-ed5f-55e6-a3c9-0800274a3333", tagMap.get("uuid"));
+		Assert.assertEquals("Oxygen", ((Map) tagMap.get("bedTag")).get("name"));
+	}
+
+	@Test
+	public void shouldSearchBySihsalusOperationalStatusCaseInsensitively() throws Exception {
+		BedManagementService service = Context.getService(BedManagementService.class);
+		Bed bed = service.getBedByUuid(AVAILABLE_BED_UUID);
+		bed.setStatus(BedStatus.CLEANING.name());
+		service.saveBed(bed);
+
+		MockHttpServletRequest request = request(RequestMethod.GET, getURI());
+		request.addParameter("status", "cleaning");
+		SimpleObject response = deserialize(handle(request));
+		List results = (ArrayList) response.get("results");
+
+		Assert.assertEquals(1, results.size());
+		Assert.assertEquals(AVAILABLE_BED_UUID, PropertyUtils.getProperty(results.get(0), "uuid"));
+		Assert.assertEquals("CLEANING", PropertyUtils.getProperty(results.get(0), "status"));
+	}
+
+	@Test(expected = IllegalPropertyException.class)
+	public void shouldRejectUnsupportedStatusInsteadOfTreatingItAsOccupied() throws Exception {
+		MockHttpServletRequest request = request(RequestMethod.GET, getURI());
+		request.addParameter("status", "UNKNOWN");
+		deserialize(handle(request));
+	}
+
 	@Test
 	public void shouldSearchBedByTypeAndStatus() throws Exception {
 		MockHttpServletRequest request1 = request(RequestMethod.GET, getURI());

@@ -2,5 +2,8 @@ package org.openmrs.module.bedmanagement.constants;
 
 public enum BedStatus {
 	AVAILABLE,
-	OCCUPIED
+	OCCUPIED,
+	CLEANING,
+	MAINTENANCE,
+	ISOLATION
 }
