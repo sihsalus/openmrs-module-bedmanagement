@@ -24,8 +24,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.Patient;
 import org.openmrs.Visit;
+import org.openmrs.VisitAttribute;
+import org.openmrs.VisitAttributeType;
 import org.openmrs.api.APIAuthenticationException;
 import org.openmrs.api.context.Context;
+import org.openmrs.customdatatype.datatype.ConceptDatatype;
 import org.openmrs.module.bedmanagement.BedDetails;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.util.PrivilegeConstants;
@@ -47,15 +50,28 @@ public class ClinicalVisitClosureServiceTest extends BaseModuleContextSensitiveT
 	}
 
 	@Test
-	public void shouldCloseVisitWithoutExposingGlobalPropertiesOrBedPrivileges() {
+	public void shouldCloseVisitWithConceptAttributeWithoutExposingValidationOrBedPrivileges() {
+		Visit visit = Context.getVisitService().getVisit(1001);
+		VisitAttributeType accreditationType = new VisitAttributeType();
+		accreditationType.setName("Accreditation state");
+		accreditationType.setDatatypeClassname(ConceptDatatype.class.getName());
+		accreditationType.setMinOccurs(0);
+		Context.getVisitService().saveVisitAttributeType(accreditationType);
+		VisitAttribute accreditation = new VisitAttribute();
+		accreditation.setAttributeType(accreditationType);
+		accreditation.setValue(Context.getConceptService().getConcept(5497));
+		visit.addAttribute(accreditation);
+		Context.getVisitService().saveVisit(visit);
+
 		Context.authenticate("normal-user", "normal-password");
 		assertFalse(Context.hasPrivilege(PrivilegeConstants.GET_GLOBAL_PROPERTIES));
+		assertFalse(Context.hasPrivilege(PrivilegeConstants.GET_CONCEPT_ATTRIBUTE_TYPES));
 
-		Visit visit = Context.getVisitService().getVisit(1001);
 		Patient patient = visit.getPatient();
 		clinicalVisitClosureService.endVisit(visit.getUuid(), new Date());
 
 		assertFalse(Context.hasPrivilege(PrivilegeConstants.GET_GLOBAL_PROPERTIES));
+		assertFalse(Context.hasPrivilege(PrivilegeConstants.GET_CONCEPT_ATTRIBUTE_TYPES));
 		Context.authenticate("test-user", "test");
 		BedDetails updatedBedDetails = bedManagementService.getBedAssignmentDetailsByPatient(patient);
 		assertThat(updatedBedDetails, is(nullValue()));
