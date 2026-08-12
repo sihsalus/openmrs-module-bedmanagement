@@ -43,18 +43,28 @@ public class ClinicalVisitClosureServiceImpl extends BaseOpenmrsService implemen
 			return visit;
 		}
 
-		// VisitValidator reads the overlap setting through AdministrationService. That
-		// implementation detail must not force clinicians to read every global property.
-		boolean addGlobalPropertyProxy = !Context.hasPrivilege(PrivilegeConstants.GET_GLOBAL_PROPERTIES);
-		if (addGlobalPropertyProxy) {
-			Context.addProxyPrivilege(PrivilegeConstants.GET_GLOBAL_PROPERTIES);
-		}
+		// Visit validation reads the overlap setting and resolves Concept-valued visit
+		// attributes. Those implementation details must not force clinicians to receive
+		// broad metadata-reading privileges outside this narrowly scoped operation.
+		boolean addedGlobalPropertyProxy = false;
+		boolean addedConceptAttributeTypeProxy = false;
 
 		try {
+			if (!Context.hasPrivilege(PrivilegeConstants.GET_GLOBAL_PROPERTIES)) {
+				Context.addProxyPrivilege(PrivilegeConstants.GET_GLOBAL_PROPERTIES);
+				addedGlobalPropertyProxy = true;
+			}
+			if (!Context.hasPrivilege(PrivilegeConstants.GET_CONCEPT_ATTRIBUTE_TYPES)) {
+				Context.addProxyPrivilege(PrivilegeConstants.GET_CONCEPT_ATTRIBUTE_TYPES);
+				addedConceptAttributeTypeProxy = true;
+			}
 			return Context.getVisitService().endVisit(visit, stopDatetime);
 		}
 		finally {
-			if (addGlobalPropertyProxy) {
+			if (addedConceptAttributeTypeProxy) {
+				Context.removeProxyPrivilege(PrivilegeConstants.GET_CONCEPT_ATTRIBUTE_TYPES);
+			}
+			if (addedGlobalPropertyProxy) {
 				Context.removeProxyPrivilege(PrivilegeConstants.GET_GLOBAL_PROPERTIES);
 			}
 		}
